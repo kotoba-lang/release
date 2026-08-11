@@ -5,8 +5,26 @@
             [kotoba.lang.version-policy :as version])
   (:import [java.util Base64]))
 
+(defn- stable-compare [a b]
+  (compare (pr-str a) (pr-str b)))
+
+(defn canonical-value
+  "Recursively canonicalize EDN containers before signing. Top-level sorting
+  alone is insufficient because artifact digest maps may be constructed in a
+  different order by each platform builder."
+  [value]
+  (cond
+    (map? value) (into (sorted-map-by stable-compare)
+                       (map (fn [[k v]] [k (canonical-value v)])) value)
+    (set? value) (into (sorted-set-by stable-compare)
+                       (map canonical-value) value)
+    (vector? value) (mapv canonical-value value)
+    (list? value) (apply list (map canonical-value value))
+    (seq? value) (doall (map canonical-value value))
+    :else value))
+
 (defn canonical-body [envelope]
-  (pr-str (into (sorted-map) (dissoc envelope :signature))))
+  (pr-str (canonical-value (dissoc envelope :signature))))
 
 (defn verify
   "Verify tag shape, v<semver>, complete content binding, signer trust/status,
