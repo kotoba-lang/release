@@ -37,3 +37,12 @@
            (:code (tag/verify policy
                               {(:signer envelope) {:status :revoked}}
                               envelope))))))
+
+(deftest canonical-body-is-independent-of-nested-map-and-set-order
+  (let [left {:tag "v0.7.0"
+              :artifact-digests (array-map :linux "sha256:b" :darwin "sha256:a")
+              :platforms (hash-set :linux :darwin)}
+        right {:platforms (hash-set :darwin :linux)
+               :artifact-digests (array-map :darwin "sha256:a" :linux "sha256:b")
+               :tag "v0.7.0"}]
+    (is (= (tag/canonical-body left) (tag/canonical-body right)))))
