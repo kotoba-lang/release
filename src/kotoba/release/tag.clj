@@ -1,6 +1,48 @@
 (ns kotoba.release.tag
   "Fail-closed verification of release-tag envelopes described by a Kotoba
-  language version policy."
+  language version policy.
+
+  ## Why this is still `.clj` while `kotoba.release.admission` is `.cljc`
+
+  Not for want of trying, and not because of `java.util.Base64` — that has a
+  portable replacement in `kotoba.bytes/base64-decode`, and `ed25519.core` is
+  already `.cljc`. The blocker is one call:
+
+      (version/parse-semver release-version)
+
+  `kotoba.lang.version-policy` is a `.clj` namespace in
+  `kotoba-lang/kotoba-lang` that imports `java.time`. ClojureScript cannot
+  load it, so nothing that asks it a question can be portable either.
+
+  There are exactly two ways past that and this repo may take neither:
+
+  - Make `version-policy` portable. That is a change to
+    `kotoba-lang/kotoba-lang`, not to this repository.
+  - Parse the semver here instead. `resources/repository-rules.edn` names
+    this repo `:role :runtime` with
+    `:must-not [:define-language-semantics …]`, and what counts as a valid
+    Kotoba version IS language semantics. Duplicating the parser to gain a
+    file extension would trade a rule that is enforced for portability that
+    is only claimed — and would leave two definitions of a valid version
+    that can drift apart, one of them in the repository that is supposed to
+    be downstream of the other.
+
+  So this file waits on the upstream namespace. `test/run_portable.cljs`
+  says so too, and does not list this suite rather than listing it and
+  failing to load.
+
+  ## And when that unblocks, `canonical-body` is a second thing to check
+
+  `canonical-body` is `pr-str` over the envelope, and that string is what
+  gets SIGNED. ClojureScript has no distinct floating-point type — its
+  reader turns 1.0 into 1 — so an envelope carrying any non-integral
+  number would print differently on the two runtimes, and a signature made
+  on one would not verify on the other. Today's envelopes are strings,
+  keywords and integers below 2^53, which print identically, so nothing is
+  broken; but the day this becomes `.cljc` that has to be established
+  rather than assumed. Measured 2026-08-18: `(pr-str 1.0)` is \"1.0\" on the
+  JVM and \"1\" under ClojureScript, and `(pr-str -0.0)` is \"-0.0\" and
+  \"0\"."
   (:require [ed25519.core :as ed]
             [kotoba.lang.version-policy :as version])
   (:import [java.util Base64]))

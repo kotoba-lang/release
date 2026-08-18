@@ -1,5 +1,5 @@
 (ns kotoba.release.admission-test
-  (:require [clojure.test :refer [deftest is]]
+  (:require [clojure.test :refer [deftest is testing]]
             [kotoba.release.admission :as admission]))
 
 (def digest "sha256:language-release")
@@ -138,6 +138,101 @@
                (assoc-in base [:approvals 1 :approval/approver] :alice)
                (assoc-in base [:approvals 0 :approval/signature] [:forged])]]
     (is (false? (:release/allowed? (admission/evaluate bad))))
-    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+    ;; `clojure.lang.ExceptionInfo` is a JVM class name and does not exist on
+    ;; ClojureScript. `thrown-with-msg?` resolves its first argument at
+    ;; macroexpansion, which is after the reader has already chosen a branch,
+    ;; so one conditional is enough. `ex-info` produces an `ExceptionInfo`
+    ;; that extends `js/Error` on ClojureScript, so the catch is as narrow as
+    ;; that platform allows. This is the ONLY change to an assertion that
+    ;; existed before the conversion, and it changes the type named, not what
+    ;; is asserted or how many assertions there are.
+    (is (thrown-with-msg? #?(:clj clojure.lang.ExceptionInfo :cljs js/Error)
                           #"secure release admission denied"
                           (admission/admit! bad)))))
+
+;; ── Added with the 2026-08-18 `.clj` → `.cljc` conversion ────────────────
+
+(deftest each-tampering-is-named-by-the-violation-it-produces
+  ;; `release-requires-all-three-independent-authorities` above asserts only
+  ;; that a tampered request is `false?`, which every one of these twelve
+  ;; violation keywords satisfies at once. Swapping two of them — reporting a
+  ;; forged approval as a transport failure — leaves that test green and
+  ;; makes the audit record a lie. These pairs were read off the evaluator
+  ;; before the conversion, not invented here.
+  (let [expected
+        {[:capability-token :capability/audience] #{:signed-capability}
+         [:hardware-signing-evidence :private-exported?] #{:hardware-signing}
+         [:telemetry-receipt :receipt/signature]
+         #{:immutable-remote-receipt :artifact-binding}
+         [:transport-profile :mutual-auth?] #{:release-transport}
+         [:restore-receipt :restore-drill/destructive?] #{:destructive-restore}
+         [:restore-attestation :receipt/signature]
+         #{:restore-attestation :restore-attestation-binding}
+         [:artifact-envelope :envelope/hybrid?] #{:hybrid-artifact-envelope}
+         [:artifact-envelope :envelope/artifact-digest] #{:hybrid-artifact-binding}
+         [:abac-attributes :subject :id] #{:release-abac}
+         [:approvals 0 :approval/signature] #{:independent-approval-quorum}}
+        tamper {[:capability-token :capability/audience] :other
+                [:hardware-signing-evidence :private-exported?] true
+                [:telemetry-receipt :receipt/signature] [:forged digest]
+                [:transport-profile :mutual-auth?] false
+                [:restore-receipt :restore-drill/destructive?] false
+                [:restore-attestation :receipt/signature] [:forged digest]
+                [:artifact-envelope :envelope/hybrid?] false
+                [:artifact-envelope :envelope/artifact-digest] "sha256:other"
+                [:abac-attributes :subject :id] :attacker
+                [:approvals 0 :approval/signature] [:forged]}]
+    (is (= 10 (count expected)) "if this table shrinks the test measures less")
+    (doseq [[path violations] expected]
+      (is (= violations
+             (set (:release/violations (admission/evaluate (assoc-in base path (get tamper path))))))
+          (str "wrong violations reported for " path)))))
+
+(deftest a-clean-request-reports-no-violations-and-admits
+  (let [result (admission/evaluate base)]
+    (is (= [] (:release/violations result))
+        "empty, not merely allowed — `:release/allowed?` is `(empty? violations)`
+         so the two cannot disagree, but the list is what an auditor reads")
+    (is (= "kotoba-lang/kotoba-lang" (:release/repository result)))
+    (is (= digest (:release/artifact-digest result))))
+  (testing "admit! returns the same result rather than a bare true"
+    (is (= (admission/evaluate base) (admission/admit! base)))))
+
+(deftest the-abac-question-asked-carries-the-publish-capability
+  ;; Found by mutation `:the-abac-action-carries-the-publish-capability`,
+  ;; which survived the first blind run: emptying `:capabilities` from the
+  ;; action handed to the ABAC evaluator changed nothing. It could not be
+  ;; caught by tightening the fixture policy the obvious way, either —
+  ;; `kotoba.security.abac` checks capabilities with a SUBSET rule, which
+  ;; denies on excess and never on absence, so an empty set is allowed by
+  ;; every policy there is. The only way to observe the declaration is from
+  ;; the other side: a policy that permits NO capabilities must refuse the
+  ;; real request, and would wave the mutated one through.
+  (let [permits-nothing (assoc (:abac-policy base) :action/capabilities #{})
+        result (admission/evaluate (assoc base :abac-policy permits-nothing))]
+    (is (contains? (set (:release/violations result)) :release-abac)
+        "a policy allowing no capabilities must refuse a publish that declares one")
+    (is (false? (:release/allowed? result))))
+  (testing "and the unmutated policy, which allows exactly that one capability,
+            admits — so the refusal above is about the capability and not about
+            the policy being tightened at all"
+    (is (:release/allowed? (admission/evaluate base)))))
+
+(deftest every-sub-result-is-in-the-record-an-auditor-reads
+  ;; Found by mutation `:the-report-carries-the-hardware-result`, which
+  ;; survived: nilling out `:release/hardware-signing` in the returned map
+  ;; broke nothing, because every assertion here read `:release/allowed?` or
+  ;; `:release/violations` and none read the evidence underneath. A decision
+  ;; record that says "denied" without saying what each authority answered is
+  ;; not an audit record.
+  (let [result (admission/evaluate base)]
+    (doseq [k [:release/capability :release/hardware-signing :release/telemetry
+               :release/transport :release/restore :release/restore-attestation
+               :release/crypto :release/abac :release/approval]]
+      (is (map? (get result k)) (str k " is missing from the decision record")))
+    (is (= 9 (count (filter #(map? (get result %))
+                            [:release/capability :release/hardware-signing
+                             :release/telemetry :release/transport
+                             :release/restore :release/restore-attestation
+                             :release/crypto :release/abac :release/approval])))
+        "if this list shrinks the test measures less")))
