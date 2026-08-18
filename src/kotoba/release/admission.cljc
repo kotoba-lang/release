@@ -1,5 +1,24 @@
 (ns kotoba.release.admission
-  "Fail-closed release publication admission for language/contracts artifacts."
+  "Fail-closed release publication admission for language/contracts artifacts.
+
+  ## Why this is `.cljc` and not `.clj`
+
+  Nothing in here was ever JVM-bound. There is no interop, no I/O and no
+  host service: it merges maps, calls eight `kotoba.security.*` evaluators
+  that are all themselves `.cljc`, and collects the keywords they disagree
+  on. The `.clj` extension was an accident of the file it was born in, and
+  it made an admission decision unavailable to any runtime but the JVM —
+  which is backwards for this workspace, where the order is kotoba-wasm →
+  clojurewasm → ClojureScript → nbb and the JVM is last.
+
+  `test/run_portable.cljs` runs this namespace's suite under nbb, so the
+  claim is measured rather than asserted by a file extension.
+
+  ## Its siblings are still `.clj`, and that is not an oversight
+
+  `kotoba.release.tag` and `kotoba.release.cli` did not come with it. See
+  `tag.clj`'s docstring for the reason — it is a real constraint, not
+  unfinished work."
   (:require [kotoba.security.abac :as abac]
             [kotoba.security.approval :as approval]
             [kotoba.security.capability :as capability]
