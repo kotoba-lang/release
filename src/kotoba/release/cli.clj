@@ -2,7 +2,7 @@
   "Offline sign/verify CLI for release-tag envelopes. Secret seed bytes enter
   only through stdin; policy, trust, and envelopes are explicit files."
   (:require [clojure.edn :as edn]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [ed25519.core :as ed]
             [kotoba.release.tag :as tag])
   (:import [java.util Base64]))
