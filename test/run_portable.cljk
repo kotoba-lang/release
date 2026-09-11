@@ -1,11 +1,11 @@
-#!/usr/bin/env nbb
+#!/usr/bin/env kbb
 ;; The portable half of this repo's suite, on nbb — no build step, no JVM.
 ;;
 ;; A reader conditional whose `:cljs` branch nothing ever evaluates is not
 ;; portability, it is the appearance of it: a check that cannot fail. This
 ;; runner is what makes `kotoba.release.admission`'s `.cljc` an actual claim.
 ;;
-;;   nbb --classpath src:test:<security>/src test/run_portable.cljk
+;;   kbb --backend sci --classpath src:test:<security>/src test/run_portable.cljk
 ;;
 ;; Run it from ANY working directory — nothing on this path reads a file.
 ;;
@@ -13,7 +13,7 @@
 ;;
 ;; `kotoba.release.tag` and `kotoba.release.cli` are still `.clj`, so their
 ;; suites are not in this runner and `Ran N tests` below is smaller than
-;; `clojure -M:test`'s. That difference is the honest report of how far the
+;; `kbb -M:test`'s. That difference is the honest report of how far the
 ;; conversion got; naming them here would fail to load rather than quietly
 ;; pass, but omitting them and saying nothing would be the real defect. The
 ;; reason is in `src/kotoba/release/tag.cljk`'s docstring: `tag/verify` asks
