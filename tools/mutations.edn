@@ -15,7 +15,7 @@
 ;; "the admission decision is measured", not "release assurance is
 ;; measured".
 ;;
-;; ⚠ These mutations drive `clojure -M:test`, which on this repo runs the
+;; ⚠ These mutations drive `kbb -M:test`, which on this repo runs the
 ;; `.clj` suites too. `test/run_portable.cljk` runs the admission suite
 ;; under nbb and this harness does not invoke it. There is no reader
 ;; conditional in `admission.cljc` at all — that is the point of it — so

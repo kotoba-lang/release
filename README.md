@@ -9,8 +9,8 @@ requests are evaluated by `kotoba.release.admission/evaluate` or admitted with
 `kotoba.release.admission/admit!`.
 
 ```sh
-clojure -M:test
-clojure -M:lint
+kbb -M:test
+kbb -M:lint
 ```
 
 ## Portability — one namespace of three
@@ -18,7 +18,7 @@ clojure -M:lint
 `kotoba.release.admission` is `.cljc` as of 2026-08-18 and runs under nbb:
 
 ```sh
-nbb --classpath src:test:<security>/src test/run_portable.cljk
+kbb --backend sci --classpath src:test:<security>/src test/run_portable.cljk
 ```
 
 Nothing in it was ever JVM-bound. It has no interop, no I/O and no host
@@ -49,18 +49,18 @@ the separate trust document.
 
 ```sh
 kagi get kotoba-language-release-ed25519 --compartment personal |
-  clojure -M:tag sign --policy version-policy.edn --trust release-trust.edn \
+  kbb -M:tag sign --policy version-policy.edn --trust release-trust.edn \
     --envelope unsigned.edn > signed.edn
 
-clojure -M:tag verify --policy version-policy.edn --trust release-trust.edn \
+kbb -M:tag verify --policy version-policy.edn --trust release-trust.edn \
   --envelope signed.edn
 ```
 
 ## Mutation testing
 
 ```sh
-nbb tools/check-mutations.cljk   # every :find occurs exactly once
-nbb tools/mutate.cljk            # apply each, report what reddened
+kbb --backend sci tools/check-mutations.cljk   # every :find occurs exactly once
+kbb --backend sci tools/mutate.cljk            # apply each, report what reddened
 ```
 
 `tools/mutations.edn` states its scope: the admission decision, not release
