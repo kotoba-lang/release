@@ -27,7 +27,7 @@
     that can drift apart, one of them in the repository that is supposed to
     be downstream of the other.
 
-  So this file waits on the upstream namespace. `test/run_portable.cljs`
+  So this file waits on the upstream namespace. `test/run_portable.cljk`
   says so too, and does not list this suite rather than listing it and
   failing to load.
 
