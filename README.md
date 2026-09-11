@@ -18,7 +18,7 @@ clojure -M:lint
 `kotoba.release.admission` is `.cljc` as of 2026-08-18 and runs under nbb:
 
 ```sh
-nbb --classpath src:test:<security>/src test/run_portable.cljs
+nbb --classpath src:test:<security>/src test/run_portable.cljk
 ```
 
 Nothing in it was ever JVM-bound. It has no interop, no I/O and no host
@@ -59,8 +59,8 @@ clojure -M:tag verify --policy version-policy.edn --trust release-trust.edn \
 ## Mutation testing
 
 ```sh
-nbb tools/check-mutations.cljs   # every :find occurs exactly once
-nbb tools/mutate.cljs            # apply each, report what reddened
+nbb tools/check-mutations.cljk   # every :find occurs exactly once
+nbb tools/mutate.cljk            # apply each, report what reddened
 ```
 
 `tools/mutations.edn` states its scope: the admission decision, not release

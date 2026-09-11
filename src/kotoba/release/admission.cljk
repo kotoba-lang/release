@@ -11,7 +11,7 @@
   which is backwards for this workspace, where the order is kotoba-wasm →
   clojurewasm → ClojureScript → nbb and the JVM is last.
 
-  `test/run_portable.cljs` runs this namespace's suite under nbb, so the
+  `test/run_portable.cljk` runs this namespace's suite under nbb, so the
   claim is measured rather than asserted by a file extension.
 
   ## Its siblings are still `.clj`, and that is not an oversight
