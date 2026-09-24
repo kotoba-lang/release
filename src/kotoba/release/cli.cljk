@@ -28,7 +28,7 @@
                     {:code :release/prepopulated-signature})))
   (let [signer (signer-from-seed seed)
         unsigned (assoc envelope :signer signer)
-        signature (ed/sign seed (.getBytes (tag/canonical-body unsigned) "UTF-8"))
+        signature (ed/sign seed (kbytes/utf8-bytes (tag/canonical-body unsigned)))
         signed (assoc unsigned :signature (kbytes/base64-encode
                                                            signature))
         result (tag/verify policy (trust-map trust) signed)]

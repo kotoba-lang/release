@@ -91,7 +91,7 @@
                :tag/signer-untrusted
                (nil? signature) :tag/invalid-signature
                (not (try
-                      (ed/verify-did signer (.getBytes body "UTF-8") signature)
+                      (ed/verify-did signer (kbytes/utf8-bytes body) signature)
                       (catch Exception _ false)))
                :tag/invalid-signature
                :else nil)]

@@ -17,8 +17,7 @@
               :tree "tree-sha256:abc" :source-root "sha256:def"
               :issued-at-ms 1784764800000 :signer signer}
         envelope (merge base overrides)
-        signature (ed/sign seed (.getBytes (tag/canonical-body envelope)
-                                           "UTF-8"))]
+        signature (ed/sign seed (kbytes/utf8-bytes (tag/canonical-body envelope)))]
     (assoc envelope :signature
            (kbytes/base64-encode signature))))
 
