@@ -1,8 +1,7 @@
 (ns kotoba.release.tag-test
-  (:require [kotoba.test :refer [deftest is]]
+  (:require [kotoba.bytes :as kbytes] [kotoba.test :refer [deftest is]]
             [ed25519.core :as ed]
-            [kotoba.release.tag :as tag])
-  (:import [java.util Base64]))
+            [kotoba.release.tag :as tag]))
 
 (def policy
   {:release-tags
@@ -21,7 +20,7 @@
         signature (ed/sign seed (.getBytes (tag/canonical-body envelope)
                                            "UTF-8"))]
     (assoc envelope :signature
-           (.encodeToString (Base64/getEncoder) signature))))
+           (kbytes/base64-encode signature))))
 
 (deftest release-tags-bind-version-commit-tree-source-and-time
   (let [seed (byte-array (map unchecked-byte (range 32)))
