@@ -1,5 +1,5 @@
 (ns kotoba.release.admission-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.release.admission :as admission]))
 
 (def digest "sha256:language-release")

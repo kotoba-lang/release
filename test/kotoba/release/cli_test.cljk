@@ -1,5 +1,5 @@
 (ns kotoba.release.cli-test
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.release.cli :as cli]))
 
 (def policy

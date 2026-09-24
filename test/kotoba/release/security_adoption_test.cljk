@@ -1,6 +1,6 @@
 (ns kotoba.release.security-adoption-test
   (:require [clojure.edn :as edn]
-            [clojure.test :refer [deftest is]]
+            [kotoba.test :refer [deftest is]]
             [kotoba.release.admission]))
 
 (def required-security-sha "f409dbade106df076cefe640781b12db558f4135")
