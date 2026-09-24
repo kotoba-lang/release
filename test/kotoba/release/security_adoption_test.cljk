@@ -1,5 +1,5 @@
 (ns kotoba.release.security-adoption-test
-  (:require [clojure.edn :as edn]
+  (:require [kotoba.lang.edn :as edn]
             [kotoba.test :refer [deftest is]]
             [kotoba.release.admission]))
 
