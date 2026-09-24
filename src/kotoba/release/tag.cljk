@@ -43,9 +43,8 @@
   rather than assumed. Measured 2026-08-18: `(pr-str 1.0)` is \"1.0\" on the
   JVM and \"1\" under ClojureScript, and `(pr-str -0.0)` is \"-0.0\" and
   \"0\"."
-  (:require [ed25519.core :as ed]
-            [kotoba.lang.version-policy :as version])
-  (:import [java.util Base64]))
+  (:require [kotoba.bytes :as kbytes] [ed25519.core :as ed]
+            [kotoba.lang.version-policy :as version]))
 
 (defn- stable-compare [a b]
   (compare (pr-str a) (pr-str b)))
@@ -77,7 +76,7 @@
         tag (:tag envelope)
         required (get-in policy [:release-tags :binds])
         body (canonical-body envelope)
-        signature (try (.decode (Base64/getDecoder)
+        signature (try (kbytes/base64-decode-bytes
                                 ^String (:signature envelope))
                        (catch Exception _ nil))
         missing (remove #(contains? envelope %) required)

@@ -1,11 +1,10 @@
 (ns kotoba.release.cli
   "Offline sign/verify CLI for release-tag envelopes. Secret seed bytes enter
   only through stdin; policy, trust, and envelopes are explicit files."
-  (:require [clojure.edn :as edn]
+  (:require [kotoba.bytes :as kbytes] [clojure.edn :as edn]
             [kotoba.lang.text :as str]
             [ed25519.core :as ed]
-            [kotoba.release.tag :as tag])
-  (:import [java.util Base64]))
+            [kotoba.release.tag :as tag]))
 
 (defn read-edn [path]
   (edn/read-string (slurp path)))
@@ -30,7 +29,7 @@
   (let [signer (signer-from-seed seed)
         unsigned (assoc envelope :signer signer)
         signature (ed/sign seed (.getBytes (tag/canonical-body unsigned) "UTF-8"))
-        signed (assoc unsigned :signature (.encodeToString (Base64/getEncoder)
+        signed (assoc unsigned :signature (kbytes/base64-encode
                                                            signature))
         result (tag/verify policy (trust-map trust) signed)]
     (when-not (:valid? result)
